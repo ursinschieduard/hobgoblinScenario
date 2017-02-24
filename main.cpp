@@ -1,0 +1,658 @@
+#include <fstream>
+#include <math.h>
+#include <string.h>
+#include <stdlib.h>
+#include <iostream>
+
+using namespace std;
+
+ifstream f("robots.in");
+ofstream g("robots.out");
+float a,b,robotX[10000],next[10000][10000],robotY[10000],mypath[10000],viz[10000],k,Edge[10000][10000];
+int Component[100000]; char s[1000000];
+int n,x,j,m,i,q;
+int totalNr;
+double VertexX[10000],pointX[10000],pointY[10000],VertexY[10000],dist[10000][10000],finalEdgesX1[10000],finalEdgesX2[10000],finalEdgesY1[10000],finalEdgesY2[10000];
+
+//only replica for testing
+double robotXX[1000],robotYY[1000];
+double VertexXX[1000],VertexYY[0100];
+
+double strict_str2double(char* str)
+{
+    char* endptr;
+    double value = strtod(str, &endptr);
+    if (*endptr) return 0;
+    return value;
+}
+
+char makotek[10000];
+
+int nrObstacles,counter,poz;
+int Obstacle[100000],tracker;
+
+float getDistance(float a, float b, float x , float y)
+{ float c;
+  c = sqrt((x - a)*(x - a)+ (y - b)*(y - b));
+  return c;
+}
+
+char currChar;double fox,cox; int localcounter;
+int nrRobots;
+void getMyInput()
+{ /*localcounter =1;nrComponent = 1;
+    int e;int a = 0; nrRobots = 0;
+    char t[1000],y[1000];
+    f.getline(s, 1000000);
+    for(i=0;i<=strlen(s)-1;i++)
+        if(s[i]==' ') strcpy(s+i,s+i+1);
+
+//g<<s;
+
+ i=0;
+g<<s;
+    while(s[i]!= '#')
+        { int alka =0;
+          if(s[i] == '(')
+                    { a = 0;i++;
+                    while(s[i]!= ',')
+                    { t[a] = s[i];  a++;   i++;
+                    }
+                    t[a] = NULL;
+
+                     fox = atof(t) ;
+
+                    if(s[i]==',')
+                {
+                    a=0;
+                    i++;
+
+
+                    while(s[i]!=')')
+                        {
+                        y[a] = s[i]; a++; i++; g<<"a";
+                        }
+
+                     cox = atof(y);
+                    y[a] = NULL;
+                i++;
+                }
+        nrRobots++;
+       robotXX[nrRobots]=fox;
+       robotYY[nrRobots]=cox;
+
+
+
+                    }
+
+
+
+         if(s[i] == ',') {
+              //  g<<"\n";
+             //   g<<"This is the current one:"<<s[i-1]<<s[i-2]<<s[i-3];
+                i++;
+           }
+
+
+//          std::cout << std::setprecision(100) << fox << '\n';
+        //  i++;
+        g<<"\n";
+
+       }
+
+
+i++;
+for(int i = 1; i<=nrRobots;i++)
+    g<<robotXX[i]<<" "<<robotYY[i]<<"\n";
+    g<<s[i];
+
+while(s[i]!= '*')
+
+     {
+
+
+        while(s[i]!=';')
+        {
+
+          int alka =0;
+          if(s[i] == '(')
+                    { a = 0;i++;
+                        while(s[i]!= ',')
+                        {
+                        t[a] = s[i]; a++; i++;
+                        }
+                      t[a] = NULL;
+                      fox = atof(t) ;
+                      if(s[i]==',')
+                {
+                    a=0;
+                    i++;
+
+
+                    while(s[i]!=')')
+                    {
+                    y[a] = s[i];
+                    a++;
+                    i++;
+                    g<<"a";
+                }
+
+                    cox = atof(y);
+                    y[a] = NULL;
+
+                   //g<<y<<" ";
+
+                    i++;
+
+                }
+                    }
+
+
+
+         if(s[i] == ',') {
+                        i++;
+                        }
+
+        g<<"\n";
+
+        g<<"bbb";
+
+   VertexXX[localcounter] = fox;
+   VertexYY[localcounter] = cox;
+   g<<VertexXX[localcounter]<<"ye";
+
+   ComponentReplica[localcounter] = nrComponent;
+   g<<"New Component: "<<ComponentReplica[localcounter]<<"Protected";
+   localcounter++;
+
+   g<<fox<<" "<<cox<<"\n";
+
+           }
+        i++;
+        nrComponent++;
+       }
+//}
+
+
+localcounter--;
+
+for(i=1;i<=localcounter;i++)
+
+     g<<"THIS IS THE GOOD STUFF"<<VertexXX[i]<<" "<<VertexYY[i]<<" "<<ComponentReplica[i]<<"\n";
+*/
+}
+
+
+
+
+void updatePaths()
+{ for(q=1;q<=totalNr;q++)
+    for(i=1;i<=totalNr;i++)
+        for(j=1;j<=totalNr;j++)
+          if(dist[i][j]> dist[i][q]+dist[q][j])
+             {dist[i][j] = dist[i][q] + dist[q][j];
+              next[i][j] = next[i][q];}
+
+}
+
+
+void Path(int z, int c)
+{
+    int pula;
+    //g<<"\n";
+    if (next[z][c] == 0) {g<<"wtf";}
+
+    pula = 0;
+    g<<z<<" "<<"("<<VertexX[z]<<" , "<<VertexY[z]<<")\n";
+    while(z!=c)
+    {
+
+
+        z = next[z][c];
+        g<<z<<" "<<"("<<VertexX[z]<<" , "<<VertexY[z]<<")\n";
+
+    }
+
+}
+
+bool Intersection(float p0_x, float p0_y, float p1_x, float p1_y,
+    float p2_x, float p2_y, float p3_x, float p3_y)
+{
+    float s1_x, s1_y, s2_x, s2_y;
+    s1_x = p1_x - p0_x;     s1_y = p1_y - p0_y;
+    s2_x = p3_x - p2_x;     s2_y = p3_y - p2_y;
+
+    float s, t;
+    s = (-s1_y * (p0_x - p2_x) + s1_x * (p0_y - p2_y)) / (-s2_x * s1_y + s1_x * s2_y);
+    t = ( s2_x * (p0_y - p2_y) - s2_y * (p0_x - p2_x)) / (-s2_x * s1_y + s1_x * s2_y);
+
+    if (s >= 0 && s <= 1 && t >= 0 && t <= 1)
+    {
+        // Collision detected
+
+        return 1;
+    }
+
+    return 0; // No collision
+}
+
+
+
+void createNetwork()
+{
+    int nrComponent;
+
+ int ComponentReplica[100000];
+
+    //INPUT GETTING
+    localcounter =1;nrComponent = 1;
+    int e;int a = 0; nrRobots = 0;
+    char t[1000],y[1000];
+    f.getline(s, 1000000);
+    for(i=0;i<=strlen(s)-1;i++)
+        if(s[i]==' ') strcpy(s+i,s+i+1);
+
+//g<<s;
+
+ i=0;
+g<<s;
+    while(s[i]!= '#')
+        { int alka =0;
+          if(s[i] == '(')
+                    { a = 0;i++;
+                    while(s[i]!= ',')
+                    { t[a] = s[i];  a++;   i++;
+                    }
+                    t[a] = NULL;
+
+                     fox = atof(t) ;
+
+                    if(s[i]==',')
+                {
+                    a=0;
+                    i++;
+
+
+                    while(s[i]!=')')
+                        {
+                        y[a] = s[i]; a++; i++; g<<"a";
+                        }
+
+                     cox = atof(y);
+                    y[a] = NULL;
+                i++;
+                }
+        nrRobots++;
+       robotXX[nrRobots]=fox;
+       robotYY[nrRobots]=cox;
+
+
+
+                    }
+
+
+
+         if(s[i] == ',') {
+              //  g<<"\n";
+             //   g<<"This is the current one:"<<s[i-1]<<s[i-2]<<s[i-3];
+                i++;
+           }
+
+
+//          std::cout << std::setprecision(100) << fox << '\n';
+        //  i++;
+        g<<"\n";
+
+       }
+
+
+i++;
+for(int i = 1; i<=nrRobots;i++)
+    g<<robotXX[i]<<" "<<robotYY[i]<<"\n";
+    g<<s[i];
+
+while(s[i]!= '*')
+
+     {  g<<"New Component:SAFASFSFASFSAFSAFSAFAFASFASFASFASFAF "<<ComponentReplica[localcounter-1]<<"Protected";
+
+
+        while(s[i]!=';')
+        {
+
+          int alka =0;
+          if(s[i] == '(')
+                    { a = 0;i++;
+                        while(s[i]!= ',')
+                        {
+                        t[a] = s[i]; a++; i++;
+                        }
+                      t[a] = NULL;
+                      fox = atof(t) ;
+                      if(s[i]==',')
+                {
+                    a=0;
+                    i++;
+
+
+                    while(s[i]!=')')
+                    {
+                    y[a] = s[i];
+                    a++;
+                    i++;
+                    g<<"a";
+                }
+
+                    cox = atof(y);
+                    y[a] = NULL;
+
+                   //g<<y<<" ";
+
+                    i++;
+
+                }
+                    }
+
+
+
+         if(s[i] == ',') {
+                        i++;
+                        }
+
+        g<<"\n";
+
+        g<<"bbb";
+
+   VertexXX[localcounter] = fox;
+   VertexYY[localcounter] = cox;
+   g<<VertexXX[localcounter]<<"ye";
+
+   ComponentReplica[localcounter] = nrComponent;
+   g<<"New Component: "<<ComponentReplica[localcounter]<<"Protected";
+   localcounter++;
+
+   g<<fox<<" "<<cox<<"\n";
+
+           }
+        i++;
+        nrComponent++;
+       }
+//}
+g<<ComponentReplica[1];g<<"<------------";
+
+for(i=1;i<=localcounter;i++)
+
+     //g<<"THIS IS THE GOOD STUFF"<<VertexXX[i]<<" "<<VertexYY[i]<<" "<<ComponentReplica[i]<<"\n";
+
+    //INPUT FINISHED
+
+
+
+    f>>x;
+
+  n = nrRobots;
+    for(i=1;i<=nrRobots;i++)
+        {
+            robotX[i] = robotXX[i];
+            robotY[i] =robotYY[i];
+            g<<robotX[i]<<" "<<robotY[i]<<" ";
+        g<<"saf";
+        }
+
+
+  counter = 1;
+    nrObstacles=nrComponent-1;
+
+    g<<nrObstacles;
+    g<<localcounter;
+
+x = localcounter;
+g<<"THIS IS LOCAL COUNTER:"<<localcounter<<" ";
+
+int counterart = 1;
+Obstacle[1] = 1;
+g<<"\n";
+
+
+g<< "WHAT THE HELL"<<ComponentReplica[1]<<"     ";
+
+for(i=2;i<= x;i++)
+{
+  counterart++;
+    if(ComponentReplica[i]!=ComponentReplica[i-1])
+    {
+       Obstacle[ComponentReplica[i-1]] = counterart-1;
+
+        g<<counterart<<" ";
+        counterart = 1;
+    }
+
+}
+
+
+Obstacle[ComponentReplica[x]] = counterart;
+
+
+
+g<<"\n";
+for(i=1;i<=nrObstacles;i++) g<<Obstacle[i]<<" ";
+g<<"\n";
+
+
+for(i=1;i<=x;i++)
+
+    for(i=1;i<=localcounter;i++) {Component[i]=ComponentReplica[i];g<<Component[i]<<" ";}
+    g<<"\n";
+
+
+
+
+
+int p;
+   k=1;p=0;
+   double q,w;
+
+   totalNr = n+x;
+   f>>a;f>>b;
+   VertexX[1] = VertexXX[1];
+   VertexY[1] = VertexYY[1];
+   pointX[p] = i;
+   pointY[p] = j;
+
+    for(i=2;i<=x+1;i++)
+    {
+         if(Component[i]!=Component[i-1]) {k++;
+                        p++;
+                         poz = i - Obstacle[Component[i-1]];
+                         finalEdgesX1[p] = a;
+                         finalEdgesX2[p] = VertexX[poz];
+                         finalEdgesY1[p] = b;
+                         finalEdgesY2[p] = VertexY[poz];
+                         Edge[poz][i-1] = 1;
+                         Edge[i-1][poz] = 1;
+                         g<<i<<"+"<<i-3<<"\n";
+                         g<<i<<"+"<<poz<<"\n";
+                        }
+        if(i == x+1) break;
+        //int o1,o2;
+       // f>>o1;f>>o2;
+        VertexX[i] = VertexXX[i];
+        VertexY[i] = VertexYY[i];
+
+        if(Component[i] ==Component[i-1])
+         {
+
+           p++;
+                         finalEdgesX1[p] = a;
+                         finalEdgesX2[p] = VertexXX[i];
+                         finalEdgesY1[p] = b;
+                         finalEdgesY2[p] = VertexYY[i];
+                         Edge[i][i-1] = 1;
+                         Edge[i-1][i] = 1;
+         }
+
+        a=VertexXX[i];
+        b=VertexYY[i];
+    }
+
+  for(i=x+1;i<=totalNr;i++)
+     {
+        VertexX[i] = robotX[i-x];
+        VertexY[i] = robotY[i-x];
+        Component[i]=i;
+     }
+
+   for(i=1;i<=totalNr;i++)
+        g<<VertexX[i]<<" "<<VertexY[i]<<"\n";
+
+
+
+    for(i=1;i<=p;i++)
+{
+
+
+        g<<"("<<finalEdgesX1[i]<<","<<finalEdgesY1[i]<<") ";
+        g<<"<-> ";
+        g<<"("<<finalEdgesX2[i]<<","<<finalEdgesY2[i]<<") ";
+        g<<"\n";
+}
+
+
+ m=p;
+for(i=1;i<=totalNr;i++)
+        for(j=i+1;j<=totalNr;j++)
+            if(Component[i]!=Component[j])
+                { int ok = 1;
+
+                    for(int r =1; r<=p; r++)
+
+
+                     if(Intersection(VertexX[i],VertexY[i],VertexX[j],VertexY[j],
+                                      finalEdgesX1[r],finalEdgesY1[r],finalEdgesX2[r],finalEdgesY2[r]) )
+                        { if(VertexX[i]==finalEdgesX1[r] && VertexY[i] == finalEdgesY1[r]||
+                             VertexX[j]==finalEdgesX1[r] && VertexY[j] == finalEdgesY1[r]||
+                             VertexX[i]==finalEdgesX2[r] && VertexY[i] == finalEdgesY2[r]||
+                             VertexX[j]==finalEdgesX2[r] && VertexY[j] == finalEdgesY2[r]
+                             ) g<<'P';
+                             else ok = 0 ;}
+                     if(ok == 1)
+                     {
+
+                         p++;
+                         g<<"Shoutout";
+                         finalEdgesX1[p] = VertexX[i];
+                         finalEdgesX2[p] = VertexX[j];
+                         finalEdgesY1[p] = VertexY[i];
+                         finalEdgesY2[p] = VertexY[j];
+                         Edge[i][j] = 1;
+                         Edge[j][i] = 1;
+                     }
+                }
+
+
+    for(i=1;i<=p;i++)
+{
+
+
+        g<<"("<<finalEdgesX1[i]<<","<<finalEdgesY1[i]<<") ";
+        g<<"<-> ";
+        g<<"("<<finalEdgesX2[i]<<","<<finalEdgesY2[i]<<") ";
+        g<<"\n";
+
+}
+
+
+        for(i=1;i<= x; i++)
+         { for(j=1;j<=x;j++)
+
+            g<<Edge[i][j]<<" ";
+            g<<"\n";
+        }
+
+         for(i = 1;i <= totalNr; i++)
+         { for(j=1;j<=totalNr;j++)
+              if(Edge[i][j]) {dist[i][j] = getDistance(VertexX[i],VertexY[i],VertexX[j],VertexY[j]);
+                              next[i][j] = j;}
+            g<<dist[i][j]<<" ";
+            g<<"\n";
+        }
+
+        for(i=1;i<=totalNr;i++)
+             for(j=1;j<=totalNr;j++) if(dist[i][j]==0 ) dist[i][j] = 1000000;
+
+      updatePaths();
+        for(i = 1;i<= totalNr; i++)
+         { for(j=1;j<=totalNr;j++)
+           g<<next[i][j]<<" ";
+           g<<"\n";
+        }
+
+
+
+
+}
+
+int nrAvailable,Available[100000],Sleeping[100000],nrSleeping;
+
+
+
+int findclosest(int Sleep[], int k)
+{
+    int i; double initialDistance = 10000000; int whichOne = 0;int indexX =0;
+    for(i = 1; i<= nrSleeping && Sleep[i]!= -1 ; i++ ) if(dist[k][Sleep[i]]< initialDistance) {whichOne = Sleep[i];initialDistance = dist[k][Sleep[i]];indexX = i;}
+    g<<indexX<<"<-----THIS IS THE INDEX";
+    Path(k,whichOne);
+    return indexX;
+}
+
+/*int findclosest2(int Sleep[], int k)
+{
+    int i; double initialDistance = 10000000; int whichOne = 0;int indexX =0;
+    for(i = 1; i<= nrSleeping && Sleep[i]!= -1 ; i++ )
+        if(dist[k][Sleep[i]]< initialDistance)
+            {whichOne = Sleep[i];
+             initialDistance = dist[k][Sleep[i]];
+             indexX = i;
+            }
+
+    Sleep[indexX] = -1;
+
+    Path(k,whichOne);
+    return indexX;
+}
+
+*/
+int main()
+{
+
+   createNetwork();
+   Path(17,38);
+   g<<nrRobots<<" "<<totalNr<<" "<<x<<"\n";
+
+   nrAvailable = 1;
+   nrSleeping = nrRobots - 1;
+   Available[1] = x + 1;
+   g<<Available[1]<<" "<<VertexX[Available[1]]<<" "<<VertexY[Available[1]]<<"\n";
+
+/*  for(i=1;i<= nrSleeping;i++) {
+                                Sleeping[i] = x + i + 1;
+                                g<<Sleeping[i]<<" "<<VertexX[Sleeping[i]]<<" "<<VertexY[Sleeping[i]]<<"\n";}
+g<<"ABCDSAFASFSAFASFFSAFASFSAFF";
+  while(nrAvailable!= nrRobots)
+  {
+        int closest;
+        int counterX;counterX = 0;
+      for(i=1;i<=nrAvailable && counterX + nrAvailable <= nrRobots;i++)
+                                    {
+                                     closest = findclosest(Sleeping,Available[i]);
+                                     g<<Sleeping[closest]<<" "<<closest<<"<------------------";
+                                     counterX++;
+                                     Available[nrAvailable + counterX] = Sleeping[closest];
+                                     Sleeping[closest] = - 1;
+                                    }
+      nrAvailable = nrAvailable + counterX;
+      g<<"\n";
+ }
+
+*/
+    return 0;
+}

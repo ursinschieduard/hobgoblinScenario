@@ -1,0 +1,10 @@
+# depslib dependency file v1.0
+1487942880 source:c:\computer science\lol\algs\theory hm 1\robots\main.cpp
+	<fstream>
+	<math.h>
+	<string.h>
+	<stdlib.h>
+	<iostream>
+	<limits>
+	<iomanip>
+
